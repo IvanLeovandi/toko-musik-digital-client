@@ -1,5 +1,5 @@
 {
-  "name": "music-nft-platform",
+  "name": "toko-musik-digital",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,19 +9,41 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.2.3"
+    "@apollo/client": "^3.13.8",
+    "@openzeppelin/contracts": "^5.2.0",
+    "@pinata/sdk": "^2.1.0",
+    "@prisma/client": "^6.6.0",
+    "@web3uikit/core": "^1.1.5",
+    "@web3uikit/icons": "^1.1.2",
+    "@web3uikit/web3": "^0.3.2",
+    "axios": "^1.8.4",
+    "bcryptjs": "^3.0.2",
+    "daisyui": "^5.0.6",
+    "ethers": "^6.13.5",
+    "graphql": "^16.11.0",
+    "js-cookie": "^3.0.5",
+    "jsonwebtoken": "^8.5.1",
+    "next": "15.2.3",
+    "pinata": "^2.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "web3uikit": "^1.0.4"
   },
   "devDependencies": {
-    "typescript": "^5",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@eslint/eslintrc": "^3",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/js-cookie": "^3.0.6",
+    "@types/jsonwebtoken": "^8.5.9",
+    "@types/node": "^20",
+    "@types/react": "^18.3.20",
+    "@types/react-dom": "^18.3.7",
     "eslint": "^9",
     "eslint-config-next": "15.2.3",
-    "@eslint/eslintrc": "^3"
+    "hardhat": "^2.22.19",
+    "prisma": "^6.6.0",
+    "tailwindcss": "^4.0.14",
+    "typescript": "^5"
   }
 }

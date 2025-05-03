@@ -1,0 +1,60 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  password        String
+  walletAddress   String?  @unique 
+  role            Role     @default(USER)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  nfts      NFT[]
+  proceeds  Proceeds[]
+}
+
+model NFT {
+  id             Int      @id @default(autoincrement())
+  tokenId        BigInt
+  contractAddress String
+  ownerId        Int
+  owner          User     @relation(fields: [ownerId], references: [id])
+
+  metadataUrl     String 
+  
+  isListed       Boolean  @default(false)
+  price          Decimal? // harga listing jika dijual
+
+  playCount      Int      @default(0)
+
+  lastRoyaltyPlayCount Int @default(0)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Proceeds {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
+
+  amount         Decimal
+  status         String   @default("pending") // pending | withdrawn
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
