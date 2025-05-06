@@ -15,6 +15,11 @@ enum Role {
   ADMIN
 }
 
+enum ProceedsStatus {
+  PENDING
+  WITHDRAWN
+}
+
 model User {
   id              Int      @id @default(autoincrement())
   email           String   @unique
@@ -54,7 +59,7 @@ model Proceeds {
   user           User     @relation(fields: [userId], references: [id])
 
   amount         Decimal
-  status         String   @default("pending") // pending | withdrawn
+  status         ProceedsStatus   @default(PENDING)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import useWallet from '@/hooks/useWallet'
 import { showToast } from '@/utils/toast'
 import contractABI from '@/constants/NftMarketplace.json'
 
@@ -24,6 +25,8 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!
 
 export default function AdminDashboardPage() {
   const { user, isHydrated, isAuthenticated } = useAuth()
+    const { account, connectWallet } = useWallet()
+  
   const router = useRouter()
 
   const [nfts, setNFTs] = useState<NFTEntry[]>([])
@@ -31,6 +34,8 @@ export default function AdminDashboardPage() {
   const [sendingRoyaltyId, setSendingRoyaltyId] = useState<number | null>(null)
   const [platformFees, setPlatformFees] = useState<string>('0')
   const [withdrawing, setWithdrawing] = useState(false)
+  const showConnectWallet = isAuthenticated && !user?.walletAddress
+
 
   useEffect(() => {
     if (isHydrated && (!isAuthenticated || user?.role !== 'ADMIN')) {
@@ -134,9 +139,24 @@ export default function AdminDashboardPage() {
     }
   }, [isAuthenticated, user])
 
+  useEffect(() => {
+    if (user?.walletAddress && account) {
+      showToast('✅ Wallet connected successfully!', 'success')
+    }
+  }, [account, user?.walletAddress])
+
   return (
     <div className="px-8 py-10 bg-base-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">Admin Royalty Dashboard</h1>
+
+      {showConnectWallet && (
+        <div className="alert alert-warning mb-6">
+          <span>🚨 Wallet not connected. Please connect your wallet to access NFT features.</span>
+          <button className="btn btn-sm btn-primary ml-auto" onClick={connectWallet}>
+            Connect Wallet
+          </button>
+        </div>
+      )}
 
       <div className="flex justify-between items-center mb-6">
         <div>

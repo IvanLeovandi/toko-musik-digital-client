@@ -7,12 +7,12 @@ import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth()
-  const { account, connectWallet, error } = useWallet()
+  const { account, connectWallet } = useWallet()
   const router = useRouter()
 
   const handleLogout = () => {
     logout()
-  }
+  }  
 
   return (
     <div className="navbar bg-base-100 shadow-sm text-2xl">
