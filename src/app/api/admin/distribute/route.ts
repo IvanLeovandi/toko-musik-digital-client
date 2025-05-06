@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const pendingProceeds = await prisma.proceeds.findFirst({
       where: {
         userId,
-        status: 'pending',
+        status: 'PENDING',
       },
     })
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             data: {
               userId,
               amount: amountEth,
-              status: 'pending',
+              status: 'PENDING',
             },
           }),
     ])

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   const updatedUser = await prisma.user.update({
     where: { email },
-    data: { wallet },
+    data: { walletAddress: wallet },
   })
 
   return NextResponse.json({ message: "Wallet connected successfully", user: updatedUser })

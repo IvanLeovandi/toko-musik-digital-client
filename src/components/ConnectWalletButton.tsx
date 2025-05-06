@@ -4,7 +4,7 @@ import { useState } from "react"
 import useWallet from "@/hooks/useWallet"
 
 export default function ConnectWalletButton ({ email }: { email: string }) {
-  const { account, connectWallet, signMessage, error } = useWallet()
+  const { account, connectWallet, signMessage } = useWallet()
   const [signatureVerified, setSignatureVerified] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -51,7 +51,6 @@ export default function ConnectWalletButton ({ email }: { email: string }) {
           {loading ? "Verifying..." : account ? "Verify Wallet" : "Connect Wallet Securely"}
         </button>
       )}
-      {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   )
 }

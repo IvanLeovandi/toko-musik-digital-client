@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
     await prisma.proceeds.updateMany({
       where: {
         userId,
-        status: 'pending',
+        status: 'PENDING',
       },
       data: {
-        status: 'withdrawn',
+        status: 'WITHDRAWN',
       },
     })
 
