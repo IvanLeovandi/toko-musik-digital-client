@@ -68,7 +68,7 @@ export default function MyNFTCreations() {
         const tokenIds = tokens.map(t => t.toString())
         setCreatedTokenIds(tokenIds)        
 
-        const res = await fetch('/api/nft/crowd-funding-details', {
+        const res = await fetch('/api/nft/artist-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tokenIds }),

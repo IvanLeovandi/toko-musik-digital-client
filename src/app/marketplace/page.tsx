@@ -74,7 +74,7 @@ export default function MarketplacePage() {
       } else if (err.code === "INSUFFICIENT_FUNDS") {
         showToast("❌ Insufficient balance.", "error")
       } else {
-        showToast("❌ Minting failed. Please try again.", "error")
+        showToast("❌ Purchase failed. Please try again.", "error")
       }
     } finally {
       setBuyingTokenId(null)
