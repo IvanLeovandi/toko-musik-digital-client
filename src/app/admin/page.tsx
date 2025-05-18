@@ -61,15 +61,16 @@ export default function AdminDashboardPage() {
 
   const fetchPlatformFees = useCallback(async () => {
     try {
+      if (!account) return
       const provider = new ethers.BrowserProvider(window.ethereum)
       const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, provider)
-      const fees = await marketplaceContract.getPendingPayment(user?.walletAddress)
+      const fees = await marketplaceContract.getPendingPayment(account)
       setPlatformFees(ethers.formatEther(fees))
     } catch (err) {
       console.error('Failed to fetch platform fees:', err)
       showToast('❌ Failed to load platform fees', 'error')
     }
-  }, [user?.walletAddress])
+  }, [account])
 
   const handleSendRoyalty = async (nft: NFTEntry) => {
     const pendingCount = nft.playCount - (nft.lastRoyaltyPlayCount || 0)
@@ -147,11 +148,11 @@ export default function AdminDashboardPage() {
   }
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'ADMIN') {
+    if (isAuthenticated && user?.role === 'ADMIN' && account && !walletMismatch) {
       fetchNFTs()
       fetchPlatformFees()
     }
-  }, [fetchPlatformFees, isAuthenticated, user])
+  }, [fetchPlatformFees, isAuthenticated, user, account, walletMismatch])
 
   useEffect(() => {
     if (user?.walletAddress && account) {
@@ -180,7 +181,7 @@ export default function AdminDashboardPage() {
         <button
           className="btn btn-success"
           onClick={handleWithdrawFees}
-          disabled={withdrawing || parseFloat(platformFees) === 0}
+          disabled={withdrawing || parseFloat(platformFees) === 0 || !account || walletMismatch}
         >
           {withdrawing ? (
             <span className="loading loading-spinner loading-sm" />
@@ -222,7 +223,7 @@ export default function AdminDashboardPage() {
                     <td>
                       <button
                         className="btn btn-sm btn-primary"
-                        disabled={pendingCount <= 0 || sendingRoyaltyId === nft.id}
+                        disabled={pendingCount <= 0 || sendingRoyaltyId === nft.id || !account || walletMismatch}
                         onClick={() => handleSendRoyalty(nft)}
                       >
                         {sendingRoyaltyId === nft.id ? (
