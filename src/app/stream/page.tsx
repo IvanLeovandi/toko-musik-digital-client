@@ -41,10 +41,7 @@ export default function MusicStreamPage() {
   const [loading, setLoading] = useState(true)
   const [playedSet, setPlayedSet] = useState<Set<string>>(new Set())
 
-  const { user } = useAuth()
-
-  console.log("NFTs:", nfts);
-  
+  const { user } = useAuth()  
 
   useEffect(() => {
     const fetchNFTs = async () => {

@@ -165,9 +165,13 @@ export default function MyNFTCreations() {
           nft.tokenId === tokenId ? { ...nft, isCrowdFunding: false, metadataUri: metadataUri } : nft
         )
       )
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      showToast('Failed to update metadata', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else {
+        showToast("❌ Update metadata failed. Please try again.", "error")
+      }
     } finally {
       setUpdatingId(null)
     }

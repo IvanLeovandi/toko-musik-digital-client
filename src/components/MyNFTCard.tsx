@@ -126,9 +126,13 @@ export default function MyNFTCard({ tokenId, listingId, isListed = false, price 
       setLocalIsListed(true)
       setLocalPrice(ethers.parseEther(inputPrice).toString())
       showToast('✅ NFT listed successfully!', 'success')
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      showToast('❌ Failed to list NFT', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else {
+        showToast("❌ Listing failed. Please try again.", "error")
+      }
     } finally {
       setLoadingState(prev => ({ ...prev, listing: false }))
     }
@@ -146,9 +150,13 @@ export default function MyNFTCard({ tokenId, listingId, isListed = false, price 
       setLocalIsListed(false)
       setLocalPrice('0')
       showToast('✅ Listing canceled', 'info')
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      showToast('❌ Failed to cancel listing', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else {
+        showToast("❌ Cancel listing failed. Please try again.", "error")
+      }
     } finally {
       setLoadingState(prev => ({ ...prev, canceling: false }))
     }

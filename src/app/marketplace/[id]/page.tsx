@@ -124,9 +124,15 @@ export default function NFTDetailPage() {
       await tx.wait(1)
       showToast("✅ NFT purchased successfully!", "success")
       router.push('/my-tokens')
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      showToast("❌ Purchase failed", "error")
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else if (err.code === "INSUFFICIENT_FUNDS") {
+        showToast("❌ Insufficient balance.", "error")
+      } else {
+        showToast("❌ Purchase failed. Please try again.", "error")
+      }
     } finally {
       setIsBuying(false)
     }

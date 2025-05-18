@@ -110,11 +110,17 @@ export default function AdminDashboardPage() {
         throw new Error(result.error || 'Failed to record distribution')
       }
 
-      showToast('✅ Royalty recorded and DB updated', 'success')
+      showToast('✅ Royalty successfully sent', 'success')
       fetchNFTs()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Send royalty failed:', err)
-      showToast('❌ Failed to send royalty', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else if (err.code === "INSUFFICIENT_FUNDS") {
+        showToast("❌ Insufficient balance.", "error")
+      } else {
+        showToast("❌ Purchase failed. Please try again.", "error")
+      }
     } finally {
       setSendingRoyaltyId(null)
     }

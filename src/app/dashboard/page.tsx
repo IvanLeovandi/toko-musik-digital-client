@@ -68,9 +68,13 @@ export default function DashboardPage() {
 
       showToast('✅ Proceeds withdrawn!', 'success')
       setProceeds('0.0')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Withdraw proceeds failed:', err)
-      showToast('❌ Withdraw failed', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else {
+        showToast("❌ Withdraw failed. Please try again.", "error")
+      }
     } finally {
       setWithdrawingProceeds(false)
     }
@@ -87,9 +91,13 @@ export default function DashboardPage() {
 
       showToast('✅ Royalties withdrawn!', 'success')
       setRoyalties('0.0')
-    } catch (err) {
+    } catch (err: any) {
       console.error('Withdraw royalties failed:', err)
-      showToast('❌ Withdraw failed', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else {
+        showToast("❌ Withdraw failed. Please try again.", "error")
+      }
     } finally {
       setWithdrawingRoyalties(false)
     }

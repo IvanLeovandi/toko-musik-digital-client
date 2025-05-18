@@ -63,10 +63,6 @@ export default function MarketplaceCard({
     fetchMetadata()
   }, [item.tokenId, musicNFTAddress])
 
-  const handleCardClick = () => {
-    router.push(`/marketplace/${item.tokenId}`)
-  }
-
   const handleBuyClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onBuyClick()
@@ -79,47 +75,49 @@ export default function MarketplaceCard({
   }
   
   return (
-    <Link
-      href={`/marketplace/${item.tokenId}`}
-      className="card bg-base-200 shadow-xl overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-2xl duration-200 cursor-pointer border border-base-300"
-    >
-      <figure className="relative w-full h-48">
-        <Image
-          src={metadata.image}
-          alt={metadata.name}
-          layout="fill"
-          objectFit="cover"
-          className="transition-opacity duration-200 hover:opacity-90"
-        />
-      </figure>
+    <div className="card w-[400px] bg-base-200 shadow-xl overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-2xl duration-200 cursor-pointer border border-base-300">
+      <Link
+        href={`/marketplace/${item.tokenId}`}
+      >
+        <figure className="relative w-full h-48">
+          <Image
+            src={metadata.image}
+            alt={metadata.name}
+            layout="fill"
+            objectFit="cover"
+            className="transition-opacity duration-200 hover:opacity-90"
+          />
+        </figure>
 
-      <div className="card-body">
-        <div className="flex justify-between items-center">
-          <h2 className="card-title">{metadata.name} - {metadata.artist}</h2>
-          <span className="font-semibold text-lg text-info">{ethers.formatEther(item.price)} ETH</span>
+        <div className="card-body">
+          <div className="flex justify-between items-center">
+            <h2 className="card-title">{metadata.name} - {metadata.artist}</h2>
+            <span className="font-semibold text-lg text-info">{ethers.formatEther(item.price)} ETH</span>
+          </div>
+          <p className="text-sm text-gray-500 line-clamp-2">{metadata.description}</p>
+
+          <div className="mt-4 space-y-1 text-xs text-gray-200">
+            {metadata.attributes.map(attr => (
+              <p key={attr.trait_type}>
+                <strong>{attr.trait_type}:</strong> {attr.value}
+              </p>
+            ))}
+          </div>
         </div>
-        <p className="text-sm text-gray-500 line-clamp-2">{metadata.description}</p>
-
-        <div className="mt-4 space-y-1 text-xs text-gray-200">
-          {metadata.attributes.map(attr => (
-            <p key={attr.trait_type}>
-              <strong>{attr.trait_type}:</strong> {attr.value}
-            </p>
-          ))}
-        </div>
-
+      </Link>
+      <div className="py-4 px-6">
         <button
-          onClick={handleBuyClick}
-          className="btn btn-primary mt-4 w-full"
-          disabled={isBuying || isOwner || isAdmin || isWalletMismatch}
-        >
-          {isBuying
-            ? <span className="loading loading-spinner loading-sm" />
-            : isOwner
-              ? 'You Own This'
-              : 'Buy NFT'}
-        </button>
+            onClick={handleBuyClick}
+            className="btn btn-primary w-full"
+            disabled={isBuying || isOwner || isAdmin || isWalletMismatch}
+          >
+            {isBuying
+              ? <span className="loading loading-spinner loading-sm" />
+              : isOwner
+                ? 'You Own This'
+                : 'Buy NFT'}
+          </button>
       </div>
-    </Link>
+    </div>
   )
 }

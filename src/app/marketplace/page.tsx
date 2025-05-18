@@ -67,9 +67,15 @@ export default function MarketplacePage() {
         throw new Error("Failed to update ownership")
       }
       window.location.reload()
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      showToast("❌ Purchase failed", "error")
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else if (err.code === "INSUFFICIENT_FUNDS") {
+        showToast("❌ Insufficient balance.", "error")
+      } else {
+        showToast("❌ Minting failed. Please try again.", "error")
+      }
     } finally {
       setBuyingTokenId(null)
     }
@@ -86,7 +92,7 @@ export default function MarketplacePage() {
         showConnectWallet={showConnectWallet}
         user={user}
       />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-24">
       {loading
         ? Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="skeleton w-full h-64 rounded-xl" />
