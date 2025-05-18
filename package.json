@@ -10,12 +10,8 @@
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
-    "@openzeppelin/contracts": "^5.2.0",
     "@pinata/sdk": "^2.1.0",
     "@prisma/client": "^6.6.0",
-    "@web3uikit/core": "^1.1.5",
-    "@web3uikit/icons": "^1.1.2",
-    "@web3uikit/web3": "^0.3.2",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
     "daisyui": "^5.0.6",
@@ -26,12 +22,10 @@
     "next": "15.2.3",
     "pinata": "^2.1.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "web3uikit": "^1.0.4"
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/js-cookie": "^3.0.6",
@@ -41,7 +35,6 @@
     "@types/react-dom": "^18.3.7",
     "eslint": "^9",
     "eslint-config-next": "15.2.3",
-    "hardhat": "^2.22.19",
     "prisma": "^6.6.0",
     "tailwindcss": "^4.0.14",
     "typescript": "^5"

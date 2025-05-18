@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const { user } = useAuth()
   const { isAuthenticated, isHydrated } = useAuth()
   const router = useRouter()
 
@@ -29,6 +30,7 @@ export default function LoginPage() {
       })
 
       const result = await res.json()
+      
       setLoading(false)
 
       if (!res.ok) {
@@ -42,7 +44,11 @@ export default function LoginPage() {
 
       showToast('✅ Login successful!')
       setTimeout(() => {
-        location.href = "/dashboard"
+        if(result.user.role === 'USER'){
+          location.href = "/dashboard"
+        } else {
+          location.href = "/admin"
+        }  
       }, 500)
     } catch (err) {
       setLoading(false)
@@ -52,10 +58,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isHydrated) return
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.role === 'USER') {
       router.replace('/dashboard')
     }
-  }, [isAuthenticated, isHydrated, router])
+    if (isAuthenticated && user?.role === 'ADMIN') {
+      router.replace('/admin')
+    }
+  }, [isAuthenticated, isHydrated, router, user, user?.role])
 
   if (!isHydrated || isAuthenticated) {
     return (
@@ -71,7 +80,7 @@ export default function LoginPage() {
         <form className="card-body" onSubmit={handleLogin}>
           <h2 className="text-center text-2xl font-bold">Login</h2>
 
-          <div className="form-control">
+          <div className="form-control flex justify-between">
             <label className="label">Email</label>
             <input
               type="email"
@@ -82,7 +91,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="form-control">
+          <div className="form-control flex justify-between">
             <label className="label">Password</label>
             <input
               type="password"

@@ -7,12 +7,13 @@ import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth()
-  const { account, connectWallet, error } = useWallet()
+  const { account, connectWallet } = useWallet()
   const router = useRouter()
 
   const handleLogout = () => {
     logout()
-  }
+    router.push('/')
+  }  
 
   return (
     <div className="navbar bg-base-100 shadow-sm text-2xl">
@@ -28,7 +29,9 @@ export default function Navbar() {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
             <li><Link href="/stream">Stream</Link></li>
             <li><Link href="/marketplace">NFT Marketplace</Link></li>
-            <li><Link href="/dashboard">Dashboard</Link></li>
+            {isAuthenticated && user?.role && (
+              <li><Link href={`/${user.role === 'USER' ? 'dashboard' : 'admin'}`}>Dashboard</Link></li>
+             )}
           </ul>
         </div>
         <Link href="/" className="btn btn-ghost text-xl">Toko Musik Digital</Link>
@@ -38,12 +41,16 @@ export default function Navbar() {
         <ul className="menu text-lg menu-horizontal flex gap-2">
           <li><Link href="/stream">Stream</Link></li>
           <li><Link href="/marketplace">NFT Marketplace</Link></li>
-          <li><Link href="/dashboard">Dashboard</Link></li>
+          {isAuthenticated && user?.role && (
+            <li><Link href={`/${user.role === 'USER' ? 'dashboard' : 'admin'}`}>Dashboard</Link></li>
+          )}
         </ul>
       </div>
 
       <div className="navbar-end flex items-center gap-3">
-        <Link href="/mint" className="btn btn-secondary">Create NFT</Link>
+        {isAuthenticated && user && user.role !== "ADMIN" && (
+          <Link href="/mint" className="btn btn-secondary">Create NFT</Link>
+        )}
 
         {!isAuthenticated ? (
           <button

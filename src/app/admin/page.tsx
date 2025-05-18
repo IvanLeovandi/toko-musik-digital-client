@@ -1,16 +1,23 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import useWallet from '@/hooks/useWallet'
 import { showToast } from '@/utils/toast'
-import contractABI from '@/constants/NftMarketplace.json'
+import marketplaceABI from '@/constants/NftMarketplace.json'
+import streamingABI from '@/constants/NFTStreaming.json'
+import WalletChangeWarning from '@/components/WalletChangeWarning'
+
+const ROYALTY_PER_PLAY_ETH = 0.00001
+const MARKETPLACE_ADDRESS = process.env.NEXT_PUBLIC_NFT_MARKETPLACE_CONTRACT_ADDRESS!
+const STREAMING_ADDRESS = process.env.NEXT_PUBLIC_NFT_STREAMING_CONTRACT_ADDRESS!
+const MUSIC_NFT_ADDRESS = process.env.NEXT_PUBLIC_MUSIC_NFT_CONTRACT_ADDRESS!
 
 interface NFTEntry {
   id: number
   tokenId: string
-  metadataUrl: string
   playCount: number
   lastRoyaltyPlayCount: number
   owner: {
@@ -19,11 +26,9 @@ interface NFTEntry {
   }
 }
 
-const ROYALTY_PER_PLAY_ETH = 0.00001
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!
-
 export default function AdminDashboardPage() {
-  const { user, isHydrated, isAuthenticated } = useAuth()
+  const { user, isHydrated, isAuthenticated, walletMismatch, retryRemoveWalletFromDB, dbSyncFailed } = useAuth()
+  const { account, connectWallet, isLoading: isUseWalletLoading } = useWallet()
   const router = useRouter()
 
   const [nfts, setNFTs] = useState<NFTEntry[]>([])
@@ -32,9 +37,10 @@ export default function AdminDashboardPage() {
   const [platformFees, setPlatformFees] = useState<string>('0')
   const [withdrawing, setWithdrawing] = useState(false)
 
+  const showConnectWallet = isAuthenticated && !isUseWalletLoading && !account
+  
   useEffect(() => {
     if (isHydrated && (!isAuthenticated || user?.role !== 'ADMIN')) {
-      showToast('⚠️ You must be an admin to access this page.', 'error')
       router.replace('/')
     }
   }, [isHydrated, isAuthenticated, user, router])
@@ -43,6 +49,7 @@ export default function AdminDashboardPage() {
     try {
       const res = await fetch('/api/admin/nfts')
       const data = await res.json()
+      
       setNFTs(data)
     } catch (err) {
       console.error('Failed to load NFTs:', err)
@@ -52,17 +59,17 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const fetchPlatformFees = async () => {
+  const fetchPlatformFees = useCallback(async () => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider)
-      const fees = await contract.getAccumulatedPlatformFees()
+      const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, provider)
+      const fees = await marketplaceContract.getPendingPayment(user?.walletAddress)
       setPlatformFees(ethers.formatEther(fees))
     } catch (err) {
       console.error('Failed to fetch platform fees:', err)
       showToast('❌ Failed to load platform fees', 'error')
     }
-  }
+  }, [user?.walletAddress])
 
   const handleSendRoyalty = async (nft: NFTEntry) => {
     const pendingCount = nft.playCount - (nft.lastRoyaltyPlayCount || 0)
@@ -73,13 +80,19 @@ export default function AdminDashboardPage() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer)
+      const streamingContract = new ethers.Contract(STREAMING_ADDRESS, streamingABI, signer)
 
       const totalEth = (pendingCount * ROYALTY_PER_PLAY_ETH).toFixed(18)
 
-      const tx = await contract.recordListen(nft.tokenId, {
-        value: ethers.parseEther(totalEth),
-      })
+      const tx = await streamingContract.recordBatchListens(
+        MUSIC_NFT_ADDRESS,
+        nft.tokenId,
+        pendingCount,
+        ethers.parseEther(totalEth),
+        {
+          value: ethers.parseEther(totalEth),
+        }
+      )
       await tx.wait()
 
       const res = await fetch('/api/admin/distribute', {
@@ -97,11 +110,17 @@ export default function AdminDashboardPage() {
         throw new Error(result.error || 'Failed to record distribution')
       }
 
-      showToast('✅ Royalty recorded and DB updated', 'success')
+      showToast('✅ Royalty successfully sent', 'success')
       fetchNFTs()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Send royalty failed:', err)
-      showToast('❌ Failed to send royalty', 'error')
+      if (err.code === "ACTION_REJECTED") {
+        showToast("🚫 Transaction has been cancelled by user.", "error")
+      } else if (err.code === "INSUFFICIENT_FUNDS") {
+        showToast("❌ Insufficient balance.", "error")
+      } else {
+        showToast("❌ Purchase failed. Please try again.", "error")
+      }
     } finally {
       setSendingRoyaltyId(null)
     }
@@ -112,9 +131,9 @@ export default function AdminDashboardPage() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer)
+      const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, signer)
 
-      const tx = await contract.withdrawFees()
+      const tx = await marketplaceContract.withdrawPayments()
       await tx.wait()
 
       showToast('✅ Platform fees withdrawn!', 'success')
@@ -132,11 +151,26 @@ export default function AdminDashboardPage() {
       fetchNFTs()
       fetchPlatformFees()
     }
-  }, [isAuthenticated, user])
+  }, [fetchPlatformFees, isAuthenticated, user])
+
+  useEffect(() => {
+    if (user?.walletAddress && account) {
+      showToast('✅ Wallet connected successfully!', 'success')
+    }
+  }, [account, user?.walletAddress])  
 
   return (
     <div className="px-8 py-10 bg-base-100 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">Admin Royalty Dashboard</h1>
+
+      <WalletChangeWarning
+        walletMismatch={walletMismatch}
+        dbSyncFailed={dbSyncFailed}
+        retryRemoveWalletFromDB={retryRemoveWalletFromDB}
+        connectWallet={connectWallet}
+        showConnectWallet={showConnectWallet}
+        user={user}
+      />
 
       <div className="flex justify-between items-center mb-6">
         <div>

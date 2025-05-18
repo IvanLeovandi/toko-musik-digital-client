@@ -6,7 +6,6 @@ export function showToast(message: string, type: "info" | "success" | "error" | 
   `
   document.getElementById("toast")?.appendChild(toast)
 
-  // Auto remove after 3s
   setTimeout(() => {
     toast.remove()
   }, 3000)

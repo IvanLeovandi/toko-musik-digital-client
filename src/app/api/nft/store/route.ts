@@ -5,9 +5,9 @@ const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { tokenId, contractAddress, ownerId, price, metadataUrl, isListed } = body
+  const { tokenId, contractAddress, ownerId, price, isListed, isCrowdFunding } = body
 
-  if (!tokenId || !contractAddress || !ownerId || !metadataUrl) {
+  if (!tokenId || !contractAddress || !ownerId) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 })
   }
 
@@ -17,9 +17,9 @@ export async function POST(req: Request) {
         tokenId: BigInt(tokenId),
         contractAddress,
         ownerId,
-        metadataUrl: metadataUrl,
         price: price ? parseFloat(price) : null,
         isListed: !!isListed,
+        isCrowdFunding: !!isCrowdFunding,
       }
     })
 

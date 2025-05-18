@@ -23,6 +23,7 @@ interface AuthContextType {
   logout: () => void
   dbSyncFailed: boolean
   retryRemoveWalletFromDB: () => Promise<void>
+  walletMismatch: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isHydrated, setIsHydrated] = useState(false)
   const [dbSyncFailed, setDbSyncFailed] = useState(false)
   const [readyToSyncDisconnect, setReadyToSyncDisconnect] = useState(false)
+  const [walletMismatch, setWalletMismatch] = useState(false)
   const router = useRouter()
   const { account, signMessage } = useWallet()
 
@@ -106,6 +108,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     syncDB()
   }, [readyToSyncDisconnect, account, user])
 
+  useEffect(() => {
+    if (!user?.walletAddress || !account || !isHydrated) {
+      setWalletMismatch(false)
+      return
+    }
+
+    const isMismatch = user.walletAddress.toLowerCase() !== account.toLowerCase()
+    
+    setWalletMismatch(isMismatch)
+
+    if (isMismatch) {
+      showToast("🚨 Wallet doesn't match the one registered to this account. Please connect the correct wallet.", "error")
+    }
+  }, [user?.walletAddress, account, isHydrated])
+
   const retryRemoveWalletFromDB = async () => {
     if (!user?.email) return
 
@@ -146,6 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         dbSyncFailed,
         retryRemoveWalletFromDB,
+        walletMismatch,
       }}
     >
       {children}

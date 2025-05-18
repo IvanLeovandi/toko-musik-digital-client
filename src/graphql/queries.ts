@@ -1,36 +1,29 @@
-// queries/listings.ts
 import { gql } from '@apollo/client'
 
 export const GET_ACTIVE_LISTINGS = gql`
   query GetActiveListings {
-    nftlistedEntities(where: { isActive: true }) {
+    listings(where: { isActive: true }, orderBy: createdAt, orderDirection: desc) {
       id
+      listingId
+      seller
+      nftContract
       tokenId
       price
-      seller
-      timestamp
+      createdAt
     }
   }
 `
 
 export const GET_MY_NFTS = gql`
-  query GetMyNFTs($creator: Bytes!) {
-    nftmintedEntities(where: { creator: $creator }) {
+  query GetMyActiveListings($seller: Bytes!) {
+    listings(where: { seller: $seller }) {
       id
+      listingId
+      seller
+      nftContract
       tokenId
-      creator
-      uri
-      timestamp
-    }
-  }
-`
-
-export const GET_MY_ACTIVE_LISTINGS = gql`
-  query GetMyListings($seller: Bytes!) {
-    nftlistedEntities(where: { seller: $seller, isActive: true }) {
-      tokenId
-      isActive
       price
+      isActive
     }
   }
 `

@@ -1,4 +1,3 @@
-// lib/jwt.ts
 import jwt from "jsonwebtoken"
 
 export function generateJwt(payload: object) {
