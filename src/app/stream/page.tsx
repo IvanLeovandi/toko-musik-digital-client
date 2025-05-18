@@ -2,16 +2,28 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
 import { ethers } from "ethers"
 import { showToast } from "@/utils/toast"
 import MusicNFTContractABI from "@/constants/MusicNFT.json"
 
-interface NFTFromDB {
-  id: number
-  tokenId: string
-  contractAddress: string
-  playCount: number
+interface NFTOwner {
+  email: string;
+  walletAddress: string;
+}
+
+interface NFT {
+  id: number;
+  contractAddress: string;
+  createdAt: Date;
+  updatedAt: Date;
+  tokenId: string;
+  ownerId: number;
+  owner: NFTOwner;
+  isListed: boolean;
+  isCrowdFunding: boolean;
+  price: string;
+  playCount: number;
+  lastRoyaltyPlayCount: number;
 }
 
 interface NFTMetadata {
@@ -23,17 +35,19 @@ interface NFTMetadata {
 }
 
 export default function MusicStreamPage() {
-  const [nfts, setNfts] = useState<NFTFromDB[]>([])
+  const [nfts, setNfts] = useState<NFT[]>([])
   const [metadataMap, setMetadataMap] = useState<Record<number, NFTMetadata>>({})
   const [loading, setLoading] = useState(true)
   const [playedSet, setPlayedSet] = useState<Set<number>>(new Set())
-  const router = useRouter()
+
+  console.log("NFTs:", nfts);
+  
 
   useEffect(() => {
     const fetchNFTs = async () => {
       try {
         const res = await fetch("/api/nft/list")
-        const data: NFTFromDB[] = await res.json()
+        const data: NFT[] = await res.json()
         setNfts(data)
 
         const provider = new ethers.BrowserProvider(window.ethereum)
@@ -107,14 +121,8 @@ export default function MusicStreamPage() {
             const metadata = metadataMap[nft.id]
             if (!metadata) return null
 
-            const handleCardClick = () => {
-              sessionStorage.setItem("nft_detail_data", JSON.stringify({ item: nft, metadata }))
-              router.push(`/marketplace/${nft.tokenId}`)
-            }
-
             return (
               <div
-                onClick={handleCardClick}
                 key={nft.id}
                 className="card bg-base-200 shadow-xl overflow-hidden"
               >

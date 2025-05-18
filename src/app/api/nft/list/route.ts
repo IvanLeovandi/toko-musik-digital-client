@@ -7,7 +7,11 @@ export async function GET() {
   try {
     const nfts = await prisma.nFT.findMany({
       where: { isCrowdFunding: false },
-      include: { owner: true },
+      include: {
+        owner: {
+          select: { email: true, walletAddress: true }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     })
 

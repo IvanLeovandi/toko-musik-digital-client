@@ -16,8 +16,8 @@ interface NFTOwner {
 interface NFT {
   id: number;
   contractAddress: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   tokenId: string;
   ownerId: number;
   owner: NFTOwner;

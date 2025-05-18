@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ethers } from 'ethers'
 import MusicNFTAbi from '@/constants/MusicNFT.json'
+import Link from 'next/link'
 
 interface NFTMetadata {
   name: string
@@ -63,10 +64,7 @@ export default function MarketplaceCard({
   }, [item.tokenId, musicNFTAddress])
 
   const handleCardClick = () => {
-    if (metadata) {
-      sessionStorage.setItem('nft_detail_data', JSON.stringify({ item, metadata }))
-      router.push(`/marketplace/${item.tokenId}`)
-    }
+    router.push(`/marketplace/${item.tokenId}`)
   }
 
   const handleBuyClick = (e: React.MouseEvent) => {
@@ -81,8 +79,8 @@ export default function MarketplaceCard({
   }
   
   return (
-    <div
-      onClick={handleCardClick}
+    <Link
+      href={`/marketplace/${item.tokenId}`}
       className="card bg-base-200 shadow-xl overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-2xl duration-200 cursor-pointer border border-base-300"
     >
       <figure className="relative w-full h-48">
@@ -122,6 +120,6 @@ export default function MarketplaceCard({
               : 'Buy NFT'}
         </button>
       </div>
-    </div>
+    </Link>
   )
 }
