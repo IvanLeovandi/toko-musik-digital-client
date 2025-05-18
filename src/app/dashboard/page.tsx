@@ -17,7 +17,7 @@ const STREAMING_ADDRESS = process.env.NEXT_PUBLIC_NFT_STREAMING_CONTRACT_ADDRESS
 
 export default function DashboardPage() {
   const { isAuthenticated, isHydrated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
-  const { account, connectWallet } = useWallet()
+  const { account, connectWallet, isLoading: isUseWalletLoading } = useWallet()
   const router = useRouter()
 
   const [proceeds, setProceeds] = useState('0.0')
@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [withdrawingRoyalties, setWithdrawingRoyalties] = useState(false)
 
   const { nfts, loading } = useMyNFTsWithListing(user?.walletAddress)
-  const showConnectWallet = isAuthenticated && !account
+  const showConnectWallet = isAuthenticated && !isUseWalletLoading && !account
 
   const getDisplayNameFromEmail = useCallback((email?: string): string => {
     const namePart = email?.split('@')[0] || ''

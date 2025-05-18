@@ -28,7 +28,7 @@ interface NFTEntry {
 
 export default function AdminDashboardPage() {
   const { user, isHydrated, isAuthenticated, walletMismatch, retryRemoveWalletFromDB, dbSyncFailed } = useAuth()
-  const { account, connectWallet } = useWallet()
+  const { account, connectWallet, isLoading: isUseWalletLoading } = useWallet()
   const router = useRouter()
 
   const [nfts, setNFTs] = useState<NFTEntry[]>([])
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
   const [platformFees, setPlatformFees] = useState<string>('0')
   const [withdrawing, setWithdrawing] = useState(false)
 
-  const showConnectWallet = isAuthenticated && !account
+  const showConnectWallet = isAuthenticated && !isUseWalletLoading && !account
   
   useEffect(() => {
     if (isHydrated && (!isAuthenticated || user?.role !== 'ADMIN')) {
