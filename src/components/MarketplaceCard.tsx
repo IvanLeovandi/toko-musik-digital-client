@@ -38,7 +38,6 @@ export default function MarketplaceCard({
   isWalletMismatch: boolean
   onBuyClick: () => void
 }) {
-  const router = useRouter()
   const [metadata, setMetadata] = useState<NFTMetadata | null>(null)
   const [loadingMeta, setLoadingMeta] = useState(true)
 
@@ -75,7 +74,7 @@ export default function MarketplaceCard({
   }
   
   return (
-    <div className="card w-[400px] bg-base-200 shadow-xl overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-2xl duration-200 cursor-pointer border border-base-300">
+    <div className="card min-w-[400px] bg-base-200 shadow-xl overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-2xl duration-200 cursor-pointer border border-base-300">
       <Link
         href={`/marketplace/${item.tokenId}`}
       >
