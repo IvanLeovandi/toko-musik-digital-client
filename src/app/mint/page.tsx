@@ -60,8 +60,8 @@ export default function MintPage() {
     isCrowdFunding: false,
   })
   const { isAuthenticated, isHydrated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
-  const { connectWallet } = useWallet()
-  const showConnectWallet = isAuthenticated && !user?.walletAddress
+  const { account, connectWallet } = useWallet()
+  const showConnectWallet = isAuthenticated && !account
 
   const router = useRouter()
 

@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
   const [platformFees, setPlatformFees] = useState<string>('0')
   const [withdrawing, setWithdrawing] = useState(false)
 
-  const showConnectWallet = isAuthenticated && !user?.walletAddress
+  const showConnectWallet = isAuthenticated && !account
   
   useEffect(() => {
     if (isHydrated && (!isAuthenticated || user?.role !== 'ADMIN')) {

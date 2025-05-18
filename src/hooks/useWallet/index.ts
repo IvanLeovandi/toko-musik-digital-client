@@ -10,12 +10,13 @@ declare global {
 
 export default function useWallet() {
   const [account, setAccount] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const isMetaMaskInstalled = () => {
-    return typeof window !== 'undefined' &&
-      typeof window.ethereum !== 'undefined' &&
-      window.ethereum.isMetaMask
-  }
+  const isMetaMaskInstalled = () =>
+    typeof window !== 'undefined' &&
+    typeof window.ethereum !== 'undefined' &&
+    window.ethereum.isMetaMask
 
   const connectWallet = useCallback(async () => {
     if (!isMetaMaskInstalled()) {
@@ -27,48 +28,61 @@ export default function useWallet() {
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
       })
-
       if (accounts.length > 0) {
         setAccount(accounts[0])
+        setError(null)
       }
     } catch (err) {
       console.error('MetaMask connection error:', err)
+      setError('Failed to connect wallet')
     }
   }, [])
 
-  const signMessage = useCallback(async (message: string): Promise<string> => {
-    if (!account || !window.ethereum) {
-      throw new Error('Wallet not connected')
-    }
+  const signMessage = useCallback(
+    async (message: string): Promise<string> => {
+      if (!account || !window.ethereum) {
+        throw new Error('Wallet not connected')
+      }
 
-    const signature = await window.ethereum.request({
-      method: 'personal_sign',
-      params: [message, account],
-    })
+      const signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, account],
+      })
 
-    return signature
-  }, [account])
+      return signature
+    },
+    [account]
+  )
 
+  // Detect wallet on initial load
   useEffect(() => {
-    const loadConnectedAccount = async () => {
-      if (!isMetaMaskInstalled()) return
+    const detectWallet = async () => {
+      if (!isMetaMaskInstalled()) {
+        setIsLoading(false)
+        return
+      }
 
       try {
         const accounts = await window.ethereum.request({
           method: 'eth_accounts',
         })
-
         if (accounts.length > 0) {
           setAccount(accounts[0])
+        } else {
+          setAccount(null)
         }
       } catch (err) {
-        console.error('Failed to load wallet:', err)
+        console.error('Failed to detect wallet:', err)
+        setError('Error detecting wallet')
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    loadConnectedAccount()
+    detectWallet()
   }, [])
 
+  // Listen for account changes
   useEffect(() => {
     if (!isMetaMaskInstalled()) return
 
@@ -81,7 +95,6 @@ export default function useWallet() {
     }
 
     window.ethereum.on('accountsChanged', handleAccountsChanged)
-
     return () => {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
     }
@@ -89,8 +102,10 @@ export default function useWallet() {
 
   return {
     account,
+    isConnected: !!account,
     connectWallet,
     signMessage,
-    isConnected: !!account,
+    isLoading,
+    error,
   }
 }

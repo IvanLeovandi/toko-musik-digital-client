@@ -13,13 +13,13 @@ import WalletChangeWarning from '@/components/WalletChangeWarning'
 
 export default function MarketplacePage() {
   const { isAuthenticated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
-  const { connectWallet } = useWallet()
+  const { account, connectWallet } = useWallet()
   const { nfts, loading } = useMarketplaceNFTs()
   const [buyingTokenId, setBuyingTokenId] = useState<string | null>(null)
   
   const router = useRouter()
 
-  const showConnectWallet = isAuthenticated && !user?.walletAddress
+  const showConnectWallet = isAuthenticated && !account
 
   useEffect(() => {
     if (!nfts.length) return;

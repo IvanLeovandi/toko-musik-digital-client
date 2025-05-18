@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [withdrawingRoyalties, setWithdrawingRoyalties] = useState(false)
 
   const { nfts, loading } = useMyNFTsWithListing(user?.walletAddress)
-  const showConnectWallet = isAuthenticated && !user?.walletAddress  
+  const showConnectWallet = isAuthenticated && !account
 
   const getDisplayNameFromEmail = useCallback((email?: string): string => {
     const namePart = email?.split('@')[0] || ''

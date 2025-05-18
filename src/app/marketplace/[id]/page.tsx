@@ -45,7 +45,7 @@ export default function NFTDetailPage() {
   const { id: tokenId } = useParams<{ id: string }>()
   const router = useRouter()
   const { isAuthenticated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
-  const { connectWallet } = useWallet()
+  const { account, connectWallet } = useWallet()
   const [item, setItem] = useState<NFT>()
   const [metadata, setMetadata] = useState<NFTMetadata | null>(null)
   const [isBuying, setIsBuying] = useState(false)
@@ -58,9 +58,7 @@ export default function NFTDetailPage() {
     tokenId
   )
 
-  const showConnectWallet = isAuthenticated && !user?.walletAddress
-
-  console.log("item", item);
+  const showConnectWallet = isAuthenticated && !account
   
   useEffect(() => {
     const loadNFTData = async () => {
