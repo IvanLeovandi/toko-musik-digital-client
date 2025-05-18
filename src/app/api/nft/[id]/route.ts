@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params
+export async function GET(request: Request, { params }: {params: Promise<{ id: string }>}) {
+  const { id } = await params
 
   try {
     const nft = await prisma.nFT.findFirst({

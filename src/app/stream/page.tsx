@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ethers } from "ethers"
 import { showToast } from "@/utils/toast"
 import MusicNFTContractABI from "@/constants/MusicNFT.json"
+import { useAuth } from "@/context/AuthContext"
 
 interface NFTOwner {
   email: string;
@@ -38,7 +39,9 @@ export default function MusicStreamPage() {
   const [nfts, setNfts] = useState<NFT[]>([])
   const [metadataMap, setMetadataMap] = useState<Record<number, NFTMetadata>>({})
   const [loading, setLoading] = useState(true)
-  const [playedSet, setPlayedSet] = useState<Set<number>>(new Set())
+  const [playedSet, setPlayedSet] = useState<Set<string>>(new Set())
+
+  const { user } = useAuth()
 
   console.log("NFTs:", nfts);
   
@@ -86,7 +89,7 @@ export default function MusicStreamPage() {
     fetchNFTs()
   }, [])
 
-  const handlePlay = async (nftId: number) => {
+  const handlePlay = async (nftId: string) => {
     if (playedSet.has(nftId)) return
     try {
       await fetch("/api/nft/increment-play", {
@@ -100,7 +103,7 @@ export default function MusicStreamPage() {
     }
   }
 
-  const handleEnded = (nftId: number) => {
+  const handleEnded = (nftId: string) => {
     setPlayedSet(prev => {
       const updated = new Set(prev)
       updated.delete(nftId)
@@ -140,8 +143,16 @@ export default function MusicStreamPage() {
                   <audio
                     controls
                     controlsList="nodownload"
-                    onPlay={() => handlePlay(nft.id)}
-                    onEnded={() => handleEnded(nft.id)}
+                    onPlay={() => {
+                      if (nft.owner.walletAddress !== user?.walletAddress) {
+                        handlePlay(nft.tokenId)
+                      }
+                    }}
+                    onEnded={() => {
+                      if (nft.owner.walletAddress !== user?.walletAddress) {
+                        handleEnded(nft.tokenId)
+                      }
+                    }}
                     src={metadata.audio}
                     className="w-full mt-2"
                   />
