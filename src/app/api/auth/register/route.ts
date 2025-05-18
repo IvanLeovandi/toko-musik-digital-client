@@ -8,7 +8,16 @@ export async function POST(req: Request) {
   const { email, password } = await req.json()
 
   if (!email || !password) {
-    return NextResponse.json({ error: "Email and password required" }, { status: 400 })
+    return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
+  }
+
+  // 🔍 Check if email already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  })
+
+  if (existingUser) {
+    return NextResponse.json({ error: "Email is already registered" }, { status: 409 }) // 409 Conflict
   }
 
   const hashedPassword = await hash(password, 10)
