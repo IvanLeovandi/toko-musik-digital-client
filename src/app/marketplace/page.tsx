@@ -92,12 +92,13 @@ export default function MarketplacePage() {
         showConnectWallet={showConnectWallet}
         user={user}
       />
+      {loading && (
+        <div className="flex justify-center items-center w-full">
+          <span className='loading loading-spinner loading-xl'></span>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-24">
-      {loading
-        ? Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton w-full h-64 rounded-xl" />
-          ))
-        : nfts.map((item) => {
+      {!loading && nfts && nfts.map((item) => {
             const isBuying = buyingTokenId === item.listingId.toString()
             const isOwner = item.seller.toLowerCase() === user?.walletAddress?.toLowerCase()
             const isAdmin = user?.role === 'ADMIN'
