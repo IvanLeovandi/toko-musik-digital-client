@@ -6,11 +6,11 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const nfts = await prisma.nFT.findMany({
+      where: { isCrowdFunding: false },
       include: { owner: true },
       orderBy: { createdAt: 'desc' },
     })
 
-    // Convert BigInt to string
     const serialized = nfts.map(nft => ({
       ...nft,
       tokenId: nft.tokenId.toString(),

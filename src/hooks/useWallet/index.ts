@@ -49,13 +49,31 @@ export default function useWallet() {
     return signature
   }, [account])
 
-  // Listen to wallet disconnect or switch
+  useEffect(() => {
+    const loadConnectedAccount = async () => {
+      if (!isMetaMaskInstalled()) return
+
+      try {
+        const accounts = await window.ethereum.request({
+          method: 'eth_accounts',
+        })
+
+        if (accounts.length > 0) {
+          setAccount(accounts[0])
+        }
+      } catch (err) {
+        console.error('Failed to load wallet:', err)
+      }
+    }
+
+    loadConnectedAccount()
+  }, [])
+
   useEffect(() => {
     if (!isMetaMaskInstalled()) return
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
-        // Disconnected
         setAccount(null)
       } else {
         setAccount(accounts[0])

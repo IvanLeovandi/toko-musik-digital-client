@@ -15,16 +15,17 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid user data" }, { status: 400 })
   }
 
-  const userId = userOrError.userId
+  const userId = userOrError.userId  
 
   try {
-    const nfts = await prisma.nFT.findMany({
+    const nftsRaw = await prisma.nFT.findMany({
       where: { ownerId: userId },
     })
-
-    if (nfts.length === 0) {
-      return NextResponse.json({ error: "No NFTs found for this user" }, { status: 404 })
-    }
+    
+    const nfts = nftsRaw.map(nft => ({
+      ...nft,
+      tokenId: nft.tokenId.toString(),
+    }))
 
     return NextResponse.json({ nfts })
 

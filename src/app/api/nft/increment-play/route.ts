@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
     const updated = await prisma.nFT.update({
-      where: { id },
+      where: { tokenId: BigInt(id) },
       data: { playCount: { increment: 1 } },
     })
 

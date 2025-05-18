@@ -1,35 +1,72 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ethers } from 'ethers'
+import MusicNFTAbi from '@/constants/MusicNFT.json'
 
 interface NFTMetadata {
   name: string
+  artist: string
   description: string
   image: string
   audio: string
   attributes: { trait_type: string; value: string }[]
 }
 
+interface itemType {
+  id: string
+  price: string
+  seller: string
+  tokenId: string
+}
+
 export default function MarketplaceCard({
   item,
-  metadata,
   isOwner,
+  isAdmin,
   isBuying,
+  isWalletMismatch,
   onBuyClick,
 }: {
-  item: any
-  metadata: NFTMetadata
+  item: itemType
   isOwner: boolean
+  isAdmin: boolean
   isBuying: boolean
+  isWalletMismatch: boolean
   onBuyClick: () => void
 }) {
   const router = useRouter()
+  const [metadata, setMetadata] = useState<NFTMetadata | null>(null)
+  const [loadingMeta, setLoadingMeta] = useState(true)
+
+  const musicNFTAddress = process.env.NEXT_PUBLIC_MUSIC_NFT_CONTRACT_ADDRESS!
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum)
+        const musicNFT = new ethers.Contract(musicNFTAddress, MusicNFTAbi, provider)
+        const tokenUri = await musicNFT.tokenURI(item.tokenId)
+        const res = await fetch(tokenUri)
+        const data = await res.json()
+        setMetadata(data)
+      } catch (err) {
+        console.error(`Error fetching metadata for tokenId ${item.tokenId}`, err)
+      } finally {
+        setLoadingMeta(false)
+      }
+    }
+
+    fetchMetadata()
+  }, [item.tokenId, musicNFTAddress])
 
   const handleCardClick = () => {
-    sessionStorage.setItem('nft_detail_data', JSON.stringify({ item, metadata }))
-    router.push(`/marketplace/${item.tokenId}`)
+    if (metadata) {
+      sessionStorage.setItem('nft_detail_data', JSON.stringify({ item, metadata }))
+      router.push(`/marketplace/${item.tokenId}`)
+    }
   }
 
   const handleBuyClick = (e: React.MouseEvent) => {
@@ -37,6 +74,12 @@ export default function MarketplaceCard({
     onBuyClick()
   }
 
+  if (loadingMeta || !metadata) {
+    return (
+      <div className="skeleton w-full h-64 rounded-xl" />
+    )
+  }
+  
   return (
     <div
       onClick={handleCardClick}
@@ -54,17 +97,10 @@ export default function MarketplaceCard({
 
       <div className="card-body">
         <div className="flex justify-between items-center">
-          <h2 className="card-title">{metadata.name}</h2>
+          <h2 className="card-title">{metadata.name} - {metadata.artist}</h2>
           <span className="font-semibold text-lg text-info">{ethers.formatEther(item.price)} ETH</span>
         </div>
         <p className="text-sm text-gray-500 line-clamp-2">{metadata.description}</p>
-
-        {/* <audio
-          controls
-          controlsList="nodownload"
-          src={metadata.audio}
-          className="w-full mt-2"
-        /> */}
 
         <div className="mt-4 space-y-1 text-xs text-gray-200">
           {metadata.attributes.map(attr => (
@@ -77,7 +113,7 @@ export default function MarketplaceCard({
         <button
           onClick={handleBuyClick}
           className="btn btn-primary mt-4 w-full"
-          disabled={isBuying || isOwner}
+          disabled={isBuying || isOwner || isAdmin || isWalletMismatch}
         >
           {isBuying
             ? <span className="loading loading-spinner loading-sm" />

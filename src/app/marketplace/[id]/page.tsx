@@ -5,28 +5,44 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ethers } from 'ethers'
 import { useAuth } from '@/context/AuthContext'
-import contractABI from '@/constants/NftMarketplace.json'
+import NFTMarketplaceContractABI from '@/constants/NftMarketplace.json'
 import { showToast } from '@/utils/toast'
+import WalletChangeWarning from '@/components/WalletChangeWarning'
+import useWallet from '@/hooks/useWallet'
 
 interface NFTMetadata {
   name: string
+  artist: string
   description: string
   image: string
   audio: string
   attributes: { trait_type: string; value: string }[]
 }
 
+interface itemType {
+  id: string,
+  listingId: string,
+  nftContract: string,
+  price: string,
+  seller: string,
+  tokenId: string,
+  createdAt: Date
+  __typename: string
+}
+
 export default function NFTDetailPage() {
   const { id: tokenId } = useParams<{ id: string }>()
   const router = useRouter()
-  const { user } = useAuth()
-
-  const [item, setItem] = useState<any>(null)
+  const { isAuthenticated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
+  const { connectWallet } = useWallet()
+  const [item, setItem] = useState<itemType>()
   const [metadata, setMetadata] = useState<NFTMetadata | null>(null)
   const [isBuying, setIsBuying] = useState(false)
   const [playCount, setPlayCount] = useState<number>(0)
   const hasCountedRef = useRef(false)
 
+  const showConnectWallet = isAuthenticated && !user?.walletAddress
+  
   useEffect(() => {
     const loadNFTData = async () => {
       const cached = sessionStorage.getItem('nft_detail_data')
@@ -40,7 +56,7 @@ export default function NFTDetailPage() {
           const res = await fetch(`/api/nft/${tokenId}`)
           if (!res.ok) throw new Error('Failed to fetch NFT')
           const data = await res.json()
-          const metaRes = await fetch(data.metadataUrl)
+          const metaRes = await fetch(data.metadataUri)
           const meta = await metaRes.json()
 
           setItem(data)
@@ -67,13 +83,18 @@ export default function NFTDetailPage() {
 
       const provider = new ethers.BrowserProvider(window.ethereum)
       const signer = await provider.getSigner()
-      const contract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!,
-        contractABI,
+      const marketplaceContract = new ethers.Contract(
+        process.env.NEXT_PUBLIC_NFT_MARKETPLACE_CONTRACT_ADDRESS!,
+        NFTMarketplaceContractABI,
         signer
       )
 
-      const tx = await contract.buyNFT(tokenId, {
+      if (!item?.listingId) {
+        showToast("❌ Missing listing ID", "error")
+        return
+      }
+
+      const tx = await marketplaceContract.buyNFT(item.listingId, {
         value: item.price,
       })
 
@@ -104,13 +125,22 @@ export default function NFTDetailPage() {
     }
   }
 
-  const isOwner = item?.seller?.toLowerCase() === user?.walletAddress?.toLowerCase()
+  const isOwner = item?.seller.toLowerCase() === user?.walletAddress?.toLowerCase()
+  const isAdmin = user?.role === 'ADMIN'
 
   if (!item || !metadata) return null
 
   return (
     <div className="bg-base-100 min-h-screen px-4 py-10">
       <div className="max-w-5xl mx-auto card bg-base-200 shadow-xl">
+      <WalletChangeWarning
+        walletMismatch={walletMismatch}
+        dbSyncFailed={dbSyncFailed}
+        retryRemoveWalletFromDB={retryRemoveWalletFromDB}
+        connectWallet={connectWallet}
+        showConnectWallet={showConnectWallet}
+        user={user}
+      />
         <div className="flex flex-col lg:flex-row gap-8 p-6">
           <div className="w-full lg:w-1/2">
             <Image
@@ -125,17 +155,19 @@ export default function NFTDetailPage() {
           <div className="w-full lg:w-1/2 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">{metadata.name}</h1>
-                <span className="font-semibold text-lg text-info">{ethers.formatEther(item.price)} ETH</span>
+                <h1 className="text-3xl font-bold">{metadata.name} - {metadata.artist}</h1>
+                <span className="font-semibold text-lg text-info">
+                  {ethers.formatEther(item.price)} ETH
+                </span>
               </div>
               <p className="text-gray-600 mt-2">{metadata.description}</p>
-              <p><strong>Seller:</strong> {item.seller}</p>
+              <p className='mt-2'><strong>Seller:</strong> {item.seller}</p>
 
               <audio
                 controls
                 controlsList="nodownload"
                 src={metadata.audio}
-                onPlay={handlePlay}
+                onPlay={item.isCrowdFunding && handlePlay}
                 className="w-full mt-4"
               />
 
@@ -153,7 +185,7 @@ export default function NFTDetailPage() {
               <button
                 onClick={handleBuy}
                 className="btn btn-primary w-full"
-                disabled={isOwner || isBuying}
+                disabled={isOwner || isBuying || isAdmin || walletMismatch}
               >
                 {isBuying ? (
                   <span className="loading loading-spinner loading-sm" />

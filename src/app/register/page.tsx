@@ -64,7 +64,7 @@ export default function RegisterPage() {
         <form className="card-body" onSubmit={handleRegister}>
           <h2 className="text-center text-2xl font-bold">Register</h2>
 
-          <div className="form-control">
+          <div className="form-control flex justify-between">
             <label className="label">Email</label>
             <input
               type="email"
@@ -75,7 +75,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="form-control">
+          <div className="form-control flex justify-between">
             <label className="label">Password</label>
             <input
               type="password"

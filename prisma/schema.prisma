@@ -30,36 +30,24 @@ model User {
   updatedAt       DateTime @updatedAt
 
   nfts      NFT[]
-  proceeds  Proceeds[]
 }
 
 model NFT {
   id             Int      @id @default(autoincrement())
-  tokenId        BigInt
+  tokenId        BigInt   @unique
   contractAddress String
   ownerId        Int
   owner          User     @relation(fields: [ownerId], references: [id])
-
-  metadataUrl     String 
   
   isListed       Boolean  @default(false)
-  price          Decimal? // harga listing jika dijual
+  price          Decimal? 
 
   playCount      Int      @default(0)
 
   lastRoyaltyPlayCount Int @default(0)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
+  isCrowdFunding  Boolean  @default(false)
 
-model Proceeds {
-  id             Int      @id @default(autoincrement())
-  userId         Int
-  user           User     @relation(fields: [userId], references: [id])
-
-  amount         Decimal
-  status         ProceedsStatus   @default(PENDING)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

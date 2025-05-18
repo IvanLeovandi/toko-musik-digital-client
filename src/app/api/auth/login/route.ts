@@ -22,12 +22,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid password" }, { status: 401 })
   }
 
-  // setelah verify password sukses
   const token = jwt.sign(
     { userId: user.id, email: user.email },
-    process.env.JWT_SECRET as string, // <-- harus di-cast string
+    process.env.JWT_SECRET as string,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN, // <-- option
+      expiresIn: process.env.JWT_EXPIRES_IN,
     }
   )
 

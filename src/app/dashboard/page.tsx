@@ -8,33 +8,92 @@ import useWallet from '@/hooks/useWallet'
 import { showToast } from '@/utils/toast'
 import { useMyNFTsWithListing } from '@/hooks/useMyNFTsWithListing'
 import MyNFTCard from '@/components/MyNFTCard'
-import contractABI from '@/constants/NftMarketplace.json'
+import marketplaceABI from '@/constants/NftMarketplace.json'
+import streamingABI from '@/constants/NFTStreaming.json'
+import MyNFTCreations from '@/components/MyNFTCreations'
+
+const MARKETPLACE_ADDRESS = process.env.NEXT_PUBLIC_NFT_MARKETPLACE_CONTRACT_ADDRESS!
+const STREAMING_ADDRESS = process.env.NEXT_PUBLIC_NFT_STREAMING_CONTRACT_ADDRESS!
 
 export default function DashboardPage() {
-  const { isAuthenticated, isHydrated, user, dbSyncFailed, retryRemoveWalletFromDB } = useAuth()
+  const { isAuthenticated, isHydrated, user, dbSyncFailed, retryRemoveWalletFromDB, walletMismatch } = useAuth()
   const { account, connectWallet } = useWallet()
   const router = useRouter()
 
-  const [pendingProceeds, setPendingProceeds] = useState<string>('0')
-  const [withdrawing, setWithdrawing] = useState(false)
+  const [proceeds, setProceeds] = useState('0.0')
+  const [royalties, setRoyalties] = useState('0.0')
+  const [isLoading, setIsLoading] = useState(false)
+  const [withdrawingProceeds, setWithdrawingProceeds] = useState(false)
+  const [withdrawingRoyalties, setWithdrawingRoyalties] = useState(false)
 
   const { nfts, loading } = useMyNFTsWithListing(user?.walletAddress)
-  const showConnectWallet = isAuthenticated && !user?.walletAddress
+  const showConnectWallet = isAuthenticated && !user?.walletAddress  
 
-  const fetchProceedsOnChain = useCallback(async () => {
+  const getDisplayNameFromEmail = useCallback((email?: string): string => {
+    const namePart = email?.split('@')[0] || ''
+    return namePart
+      .split(/[._]/)
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ') || 'User'
+  }, [])
+
+  const fetchProceedsAndRoyalties = useCallback(async () => {
+    if (!user?.walletAddress) return
     try {
+      setIsLoading(true)
       const provider = new ethers.BrowserProvider(window.ethereum)
-      const contract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!,
-        contractABI,
-        provider
-      )
-      const pending = await contract.getPendingRoyaltiesForAddress(user!.walletAddress)
-      setPendingProceeds(ethers.formatEther(pending))
+      const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, provider)
+      const proceedsWei = await marketplaceContract.getPendingPayment(user.walletAddress)
+      setProceeds(ethers.formatEther(proceedsWei))
+
+      const streamingContract = new ethers.Contract(STREAMING_ADDRESS, streamingABI, provider)
+      const royaltiesWei = await streamingContract.getPendingPayment(user.walletAddress)
+      setRoyalties(ethers.formatEther(royaltiesWei))
+      setIsLoading(false)
     } catch (err) {
-      console.error('Failed to fetch proceeds:', err)
+      console.error('Failed to fetch balances:', err)
+      showToast('❌ Failed to fetch on-chain balances', 'error')
     }
   }, [user])
+
+  const handleWithdrawProceeds = async () => {
+    setWithdrawingProceeds(true)
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, signer)
+      const tx = await marketplaceContract.withdrawPayments()
+      await tx.wait()
+
+      showToast('✅ Proceeds withdrawn!', 'success')
+      setProceeds('0.0')
+    } catch (err) {
+      console.error('Withdraw proceeds failed:', err)
+      showToast('❌ Withdraw failed', 'error')
+    } finally {
+      setWithdrawingProceeds(false)
+    }
+  }
+
+  const handleWithdrawRoyalties = async () => {
+    setWithdrawingRoyalties(true)
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
+      const streamingContract = new ethers.Contract(STREAMING_ADDRESS, streamingABI, signer)
+      const tx = await streamingContract.withdrawPayments()
+      await tx.wait()
+
+      showToast('✅ Royalties withdrawn!', 'success')
+      setRoyalties('0.0')
+    } catch (err) {
+      console.error('Withdraw royalties failed:', err)
+      showToast('❌ Withdraw failed', 'error')
+    } finally {
+      setWithdrawingRoyalties(false)
+    }
+  }
 
   useEffect(() => {
     if (!isHydrated) return
@@ -49,46 +108,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isAuthenticated && user?.walletAddress) {
-      fetchProceedsOnChain()
+      fetchProceedsAndRoyalties()
     }
-  }, [fetchProceedsOnChain, isAuthenticated, user])
-
-
-  const handleWithdraw = async () => {
-    setWithdrawing(true)
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
-      const contract = new ethers.Contract(
-        process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!,
-        contractABI,
-        signer
-      )
-  
-      const tx = await contract.withdrawRoyalties()
-      await tx.wait()
-  
-      const res = await fetch('/api/proceeds/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id }),
-      })
-  
-      if (!res.ok) {
-        const result = await res.json()
-        throw new Error(result.error || 'Failed to update DB')
-      }
-  
-      showToast('✅ Withdrawal successful!', 'success')
-      setPendingProceeds('0')
-    } catch (err) {
-      console.error('Withdraw failed:', err)
-      showToast('❌ Withdrawal failed', 'error')
-    } finally {
-      setWithdrawing(false)
-    }
-  }
-  
+  }, [fetchProceedsAndRoyalties, isAuthenticated, user])
 
   if (!isHydrated) {
     return (
@@ -101,7 +123,13 @@ export default function DashboardPage() {
   return (
     <div className="px-8 pt-3 min-h-screen">
       <h1 className="text-2xl font-bold text-center my-8">Dashboard</h1>
-      <p>Welcome, {user?.email}</p>
+      <p>Welcome, {getDisplayNameFromEmail(user?.email)}</p>
+
+      {walletMismatch && (
+        <div className="alert alert-error mb-6">
+          <span>⚠️ Wallet mismatch detected. Please connect your registered wallet: <strong>{user?.walletAddress}</strong></span>
+        </div>
+      )}
 
       {dbSyncFailed && (
         <div className="alert alert-error mb-6 justify-between items-center">
@@ -120,49 +148,59 @@ export default function DashboardPage() {
       )}
 
       <div className="flex flex-col lg:flex-row gap-6">
+        {/* My Proceeds */}
         <div className="border border-base-content/20 rounded-xl w-full px-6 py-4">
           <h3 className="font-bold text-lg text-center">My Proceeds</h3>
           <div className="flex flex-col items-center justify-center py-6">
-            <p className="text-2xl font-bold">{pendingProceeds} ETH</p>
+            <p className="text-2xl font-bold">{proceeds} ETH</p>
             <button
-              onClick={handleWithdraw}
-              disabled={withdrawing || pendingProceeds === '0'}
+              onClick={handleWithdrawProceeds}
+              disabled={withdrawingProceeds || proceeds === '0.0' || isLoading}
               className="btn btn-sm btn-success mt-2"
             >
-              {withdrawing ? <span className="loading loading-spinner loading-sm" /> : 'Withdraw'}
+              {withdrawingProceeds ? <span className="loading loading-spinner loading-sm" /> : 'Withdraw'}
             </button>
           </div>
         </div>
 
+        {/* My Royalties */}
         <div className="border border-base-content/20 rounded-xl w-full px-6 py-4">
-          <h3 className="font-bold text-lg text-center">My NFTs</h3>
-          <div className="flex items-center justify-center py-6">
-            {loading ? (
-              <div className="skeleton h-8 w-24" />
-            ) : (
-              <p className="text-2xl font-bold">{nfts?.length}</p>
-            )}
+          <h3 className="font-bold text-lg text-center">My Royalties</h3>
+          <div className="flex flex-col items-center justify-center py-6">
+            <p className="text-2xl font-bold">{royalties} ETH</p>
+            <button
+              onClick={handleWithdrawRoyalties}
+              disabled={withdrawingRoyalties || royalties === '0.0'}
+              className="btn btn-sm btn-success mt-2"
+            >
+              {withdrawingRoyalties ? <span className="loading loading-spinner loading-sm" /> : 'Withdraw'}
+            </button>
           </div>
         </div>
       </div>
 
       <h2 className="text-2xl font-bold mt-10 mb-6">My NFT Collections</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
+        {loading && Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="skeleton w-full h-56 rounded-xl" />
-            ))
-          : nfts.map((nft: any) => (
-              <MyNFTCard
-                key={nft.id}
-                metadataUri={nft.uri}
-                tokenId={nft.tokenId}
-                timestamp={nft.timestamp}
-                isListed={nft.isListed}
-                price={nft.price}
-              />
-            ))}
+        ))}
+        {!loading && nfts?.length === 0 && (
+          <div className="min-h-[100px]">
+            <p className="text-gray-500">No NFTs found in your wallet.</p>
+          </div>
+        )}
+        {!loading && nfts && nfts.map((nft) => (
+          <MyNFTCard
+            key={nft.id}
+            tokenId={nft.tokenId}
+            listingId={nft.listingId}
+            isListed={nft.isListed}
+            price={nft.price}
+          />
+        ))}
       </div>
+      <h2 className="text-2xl font-bold mt-10 mb-6">My NFT Creations</h2>
+      <MyNFTCreations />
     </div>
   )
 }
