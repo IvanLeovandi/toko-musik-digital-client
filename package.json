@@ -19,7 +19,7 @@
     "graphql": "^16.11.0",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^8.5.1",
-    "next": "15.2.3",
+    "next": "15.2.8",
     "pinata": "^2.1.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
