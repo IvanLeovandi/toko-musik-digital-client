@@ -47,10 +47,17 @@ export default function MusicStreamPage() {
     const fetchNFTs = async () => {
       try {
         const res = await fetch("/api/nft/list")
-        const data: NFT[] = await res.json()
+        const data = await res.json()
+
+        // Check if response is an error object
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(data.error || "Failed to fetch NFTs")
+        }
+
         setNfts(data)
 
-        const provider = new ethers.BrowserProvider(window.ethereum)
+        // Use public RPC instead of MetaMask for read-only operations
+        const provider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')
         const musicNFTContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_MUSIC_NFT_CONTRACT_ADDRESS!,
           MusicNFTContractABI,

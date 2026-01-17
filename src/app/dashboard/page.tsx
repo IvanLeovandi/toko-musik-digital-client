@@ -42,7 +42,8 @@ export default function DashboardPage() {
     if (!user?.walletAddress) return
     try {
       setIsLoading(true)
-      const provider = new ethers.BrowserProvider(window.ethereum)
+      // Use public RPC instead of MetaMask for read-only operations
+      const provider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')
       const marketplaceContract = new ethers.Contract(MARKETPLACE_ADDRESS, marketplaceABI, provider)
       const proceedsWei = await marketplaceContract.getPendingPayment(user.walletAddress)
       setProceeds(ethers.formatEther(proceedsWei))

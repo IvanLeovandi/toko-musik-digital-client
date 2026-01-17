@@ -46,7 +46,8 @@ export default function MarketplaceCard({
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
+        // Use public RPC instead of MetaMask for read-only operations
+        const provider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')
         const musicNFT = new ethers.Contract(musicNFTAddress, MusicNFTAbi, provider)
         const tokenUri = await musicNFT.tokenURI(item.tokenId)
         const res = await fetch(tokenUri)

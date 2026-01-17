@@ -58,7 +58,8 @@ export default function MyNFTCreations() {
     async function fetchCreatedTokens() {
       setLoading(true)
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
+        // Use public RPC instead of MetaMask for read-only operations
+        const provider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')
         const musicNFTContract = new ethers.Contract(
           process.env.NEXT_PUBLIC_MUSIC_NFT_CONTRACT_ADDRESS!,
           MusicNFTContractABI,
