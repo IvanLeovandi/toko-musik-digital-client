@@ -13,7 +13,8 @@ export default function useNFTListing(nftContractAddress: string, tokenId: strin
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum)
+        // Use public RPC instead of MetaMask for read-only operations
+        const provider = new ethers.JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')
         const marketplace = new ethers.Contract(
           process.env.NEXT_PUBLIC_NFT_MARKETPLACE_CONTRACT_ADDRESS!,
           NFTMarketplaceContractABI,
